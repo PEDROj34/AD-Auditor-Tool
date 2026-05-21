@@ -31,6 +31,7 @@ def _get_css() -> str:
         --bg-card:      #1a1a1a;
         --bg-table-alt: #111111;
         --border:       #2a2a2a;
+        --border-soft:  #1a1a1a;
         --text-primary: #e8e8e8;
         --text-muted:   #888;
         --accent:       #00d4ff;
@@ -39,128 +40,276 @@ def _get_css() -> str:
         --radius:       6px;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; }
     body {
         background: var(--bg-primary);
         color: var(--text-primary);
         font-family: var(--font-sans);
         font-size: 14px;
         line-height: 1.6;
-        padding: 0;
     }
-    /* ── Header ── */
-    .header {
-        background: linear-gradient(135deg, #0d0d0d 0%, #1a0a0a 50%, #0d0d0d 100%);
-        border-bottom: 1px solid #2a2a2a;
-        padding: 40px 48px 32px;
-        position: relative;
+
+    /* ── Layout ── */
+    .layout { display: flex; height: 100vh; }
+
+    /* ── Sidebar ── */
+    .sidebar {
+        width: 236px;
+        min-width: 236px;
+        background: #080808;
+        border-right: 1px solid var(--border-soft);
+        display: flex;
+        flex-direction: column;
         overflow: hidden;
     }
-    .header::before {
+    .sidebar-brand {
+        padding: 18px 16px 14px;
+        border-bottom: 1px solid var(--border-soft);
+        position: relative;
+    }
+    .sidebar-brand::after {
         content: '';
         position: absolute;
-        top: 0; left: 0; right: 0;
-        height: 2px;
-        background: linear-gradient(90deg, transparent, var(--accent), transparent);
+        top: 0; left: 0; right: 0; height: 2px;
+        background: linear-gradient(90deg, var(--accent), transparent);
     }
-    .header-label {
+    .brand-label {
         font-family: var(--font-mono);
-        font-size: 11px;
+        font-size: 9px;
         color: var(--accent);
-        letter-spacing: 3px;
-        text-transform: uppercase;
-        margin-bottom: 12px;
+        letter-spacing: 2px;
+        margin-bottom: 5px;
     }
-    .header h1 {
-        font-size: 28px;
-        font-weight: 700;
-        color: #fff;
-        letter-spacing: -0.5px;
-        margin-bottom: 8px;
+    .brand-domain { font-size: 14px; font-weight: 700; color: #fff; }
+    .brand-meta {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        color: #333;
+        margin-top: 3px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
-    .header-meta {
+
+    /* ── Sidebar stats ── */
+    .sidebar-stats {
         display: flex;
-        gap: 24px;
-        flex-wrap: wrap;
-        margin-top: 16px;
+        padding: 10px;
+        gap: 6px;
+        border-bottom: 1px solid var(--border-soft);
     }
-    .header-meta span {
+    .stat {
+        flex: 1;
+        text-align: center;
+        padding: 8px 4px;
+        border-radius: 4px;
+        background: #0e0e0e;
+        border: 1px solid transparent;
+    }
+    .stat.critical { border-color: rgba(239,68,68,0.18); }
+    .stat.warning  { border-color: rgba(249,115,22,0.18); }
+    .stat.ok       { border-color: rgba(34,197,94,0.15); }
+    .stat-num {
+        display: block;
         font-family: var(--font-mono);
+        font-size: 20px;
+        font-weight: 700;
+        line-height: 1;
+        margin-bottom: 2px;
+    }
+    .stat-label { font-size: 9px; color: #444; text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat.critical .stat-num { color: #ef4444; }
+    .stat.warning  .stat-num { color: #f97316; }
+    .stat.ok       .stat-num { color: #22c55e; }
+
+    /* ── Sidebar nav ── */
+    .sidebar-nav {
+        flex: 1;
+        overflow-y: auto;
+        padding: 6px 0;
+        scrollbar-width: thin;
+        scrollbar-color: #1e1e1e transparent;
+    }
+    .sidebar-nav::-webkit-scrollbar { width: 3px; }
+    .sidebar-nav::-webkit-scrollbar-thumb { background: #1e1e1e; border-radius: 2px; }
+
+    .nav-section-label {
+        font-family: var(--font-mono);
+        font-size: 9px;
+        color: #2e2e2e;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        padding: 10px 16px 3px;
+    }
+    .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 16px;
+        cursor: pointer;
+        border-left: 2px solid transparent;
+        transition: background 0.1s;
+        color: #555;
+        user-select: none;
+    }
+    .nav-item:hover { background: #0f0f0f; color: #999; }
+    .nav-item.active {
+        background: rgba(0,212,255,0.05);
+        border-left-color: var(--accent);
+        color: #ddd;
+    }
+    .nav-item.is-dashboard {
+        padding: 9px 16px 10px;
+        margin-bottom: 4px;
+        border-bottom: 1px solid var(--border-soft);
+        color: #666;
         font-size: 12px;
-        color: var(--text-muted);
+        font-weight: 500;
+        letter-spacing: 0.3px;
     }
-    .header-meta span b { color: var(--text-primary); }
-    /* ── Container ── */
-    .container { max-width: 1200px; margin: 0 auto; padding: 0 48px 64px; }
-    /* ── Summary Cards ── */
-    .summary-section { padding: 36px 0 24px; }
-    .summary-title {
+    .nav-item.is-dashboard.active { color: var(--accent); }
+
+    .nav-dot {
+        width: 6px; height: 6px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+    .nav-dot.critical { background: #ef4444; box-shadow: 0 0 5px rgba(239,68,68,0.5); }
+    .nav-dot.warning  { background: #f97316; }
+    .nav-dot.ok       { background: #22c55e; }
+    .nav-dot.info     { background: #3b82f6; }
+
+    .nav-num {
         font-family: var(--font-mono);
-        font-size: 11px;
-        color: var(--text-muted);
+        font-size: 10px;
+        color: #2e2e2e;
+        width: 16px;
+        flex-shrink: 0;
+    }
+    .nav-label {
+        font-size: 12px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        flex: 1;
+    }
+
+    .sidebar-footer {
+        padding: 9px 16px;
+        border-top: 1px solid var(--border-soft);
+        font-family: var(--font-mono);
+        font-size: 9px;
+        color: #222;
+        letter-spacing: 0.5px;
+    }
+
+    /* ── Content area ── */
+    .content {
+        flex: 1;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: #222 transparent;
+    }
+    .content::-webkit-scrollbar { width: 5px; }
+    .content::-webkit-scrollbar-thumb { background: #1e1e1e; border-radius: 3px; }
+
+    /* ── Views (show/hide) ── */
+    .view { display: none; }
+    .view.active { display: block; }
+
+    /* ── Content header (sticky) ── */
+    .content-header {
+        padding: 22px 36px 16px;
+        border-bottom: 1px solid var(--border);
+        position: sticky;
+        top: 0;
+        background: var(--bg-primary);
+        z-index: 10;
+    }
+    .content-header::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0; height: 1px;
+        background: linear-gradient(90deg, var(--accent), transparent 50%);
+        opacity: 0.35;
+    }
+    .content-label {
+        font-family: var(--font-mono);
+        font-size: 9px;
+        color: var(--accent);
         letter-spacing: 2px;
         text-transform: uppercase;
-        margin-bottom: 20px;
+        margin-bottom: 4px;
     }
-    .summary-grid {
+    .content-header h1 { font-size: 17px; font-weight: 600; color: #fff; }
+    .header-meta-bar {
+        display: flex;
+        gap: 18px;
+        flex-wrap: wrap;
+        margin-top: 8px;
+    }
+    .header-meta-bar span {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--text-muted);
+    }
+    .header-meta-bar span b { color: var(--text-primary); }
+
+    /* ── Content body ── */
+    .content-body { padding: 24px 36px 48px; }
+
+    /* ── Dashboard summary cards ── */
+    .dashboard-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        grid-template-columns: repeat(4, 1fr);
         gap: 12px;
-        margin-bottom: 12px;
+        margin-bottom: 32px;
     }
-    .summary-card {
+    .dashboard-card {
         background: var(--bg-card);
         border: 1px solid var(--border);
         border-radius: var(--radius);
-        padding: 20px;
+        padding: 22px 20px;
         text-align: center;
         position: relative;
         overflow: hidden;
     }
-    .summary-card::before {
+    .dashboard-card::before {
         content: '';
         position: absolute;
-        top: 0; left: 0; right: 0;
-        height: 2px;
+        top: 0; left: 0; right: 0; height: 2px;
     }
-    .summary-card.critical::before { background: #ef4444; }
-    .summary-card.warning::before  { background: #f97316; }
-    .summary-card.ok::before       { background: #22c55e; }
-    .summary-card .card-count {
-        font-size: 40px;
+    .dashboard-card.critical::before { background: #ef4444; }
+    .dashboard-card.warning::before  { background: #f97316; }
+    .dashboard-card.ok::before       { background: #22c55e; }
+    .dashboard-card.neutral::before  { background: #333; }
+    .dash-count {
+        font-size: 42px;
         font-weight: 700;
         font-family: var(--font-mono);
         line-height: 1;
         margin-bottom: 6px;
     }
-    .summary-card.critical .card-count { color: #ef4444; }
-    .summary-card.warning  .card-count { color: #f97316; }
-    .summary-card.ok       .card-count { color: #22c55e; }
-    .summary-card .card-label {
-        font-size: 11px;
-        color: var(--text-muted);
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
-    /* ── Module Sections ── */
-    .module-section { margin-top: 40px; }
-    .module-header {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        margin-bottom: 20px;
-        padding-bottom: 12px;
-        border-bottom: 1px solid var(--border);
-    }
-    .module-number {
+    .dashboard-card.critical .dash-count { color: #ef4444; }
+    .dashboard-card.warning  .dash-count { color: #f97316; }
+    .dashboard-card.ok       .dash-count { color: #22c55e; }
+    .dashboard-card.neutral  .dash-count { color: #444; }
+    .dash-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+
+    /* ── Section label ── */
+    .section-label {
         font-family: var(--font-mono);
-        font-size: 11px;
-        color: var(--accent);
-        background: rgba(0, 212, 255, 0.08);
-        border: 1px solid rgba(0, 212, 255, 0.2);
-        padding: 2px 8px;
-        border-radius: 3px;
+        font-size: 10px;
+        color: var(--text-muted);
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-bottom: 14px;
     }
-    .module-title { font-size: 18px; font-weight: 600; }
+
+    /* ── Module overview (dashboard table) ── */
+    .module-row { cursor: pointer; transition: background 0.1s; }
+    .module-row:hover td { background: rgba(0,212,255,0.04) !important; }
+
     /* ── Check Cards ── */
     .check-card {
         background: var(--bg-card);
@@ -191,6 +340,7 @@ def _get_css() -> str:
     .severity-badge.critical { color: #ef4444; background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3); }
     .severity-badge.warning  { color: #f97316; background: rgba(249,115,22,0.12); border: 1px solid rgba(249,115,22,0.3); }
     .severity-badge.ok       { color: #22c55e; background: rgba(34,197,94,0.12);  border: 1px solid rgba(34,197,94,0.3); }
+    .severity-badge.info     { color: #3b82f6; background: rgba(59,130,246,0.12); border: 1px solid rgba(59,130,246,0.3); }
     .check-title { font-size: 14px; font-weight: 600; }
     .check-count {
         font-family: var(--font-mono);
@@ -210,6 +360,7 @@ def _get_css() -> str:
         border-bottom: 1px solid var(--border);
         line-height: 1.5;
     }
+
     /* ── Tables ── */
     .table-wrapper { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; }
@@ -251,20 +402,23 @@ def _get_css() -> str:
         color: var(--text-muted);
         font-size: 13px;
     }
-    /* ── Footer ── */
-    .footer {
-        border-top: 1px solid var(--border);
-        padding: 20px 48px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        font-family: var(--font-mono);
-        font-size: 11px;
-        color: var(--text-muted);
+    """
+
+
+def _get_js() -> str:
+    return """
+    function navigate(el) {
+        var view = el.dataset.view;
+        document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
+        document.querySelectorAll('.view').forEach(function(v) { v.classList.remove('active'); });
+        el.classList.add('active');
+        var target = document.getElementById('view-' + view);
+        if (target) target.classList.add('active');
+        document.getElementById('main-content').scrollTop = 0;
     }
-    @media (max-width: 768px) {
-        .container, .header, .footer { padding-left: 20px; padding-right: 20px; }
-        .header-meta { flex-direction: column; gap: 6px; }
+    function navigateToModule(viewId) {
+        var navItem = document.querySelector('[data-view="' + viewId + '"]');
+        if (navItem) navigate(navItem);
     }
     """
 
@@ -829,102 +983,171 @@ def _count_severities(all_modules: list) -> dict:
 
 
 def generate(all_modules: list) -> str:
-    """
-    Gera o HTML completo do relatório.
-
-    Args:
-        all_modules: lista de resultados de todos os módulos
-
-    Returns:
-        String com o HTML completo do relatório
-    """
-    now = datetime.now(tz=timezone.utc)
+    """Gera o HTML completo do relatório com layout sidebar + painel de conteúdo."""
+    now       = datetime.now(tz=timezone.utc)
     timestamp = now.strftime("%Y-%m-%d %H:%M UTC")
+    date_str  = now.strftime("%Y-%m-%d")
     counts    = _count_severities(all_modules)
     total     = sum(counts.values())
 
-    # ── Sumário ──────────────────────────────────────────────────────────────
-    summary_html = f"""
-    <div class="summary-section">
-        <div class="summary-title">// Sumário Executivo</div>
-        <div class="summary-grid">
-            <div class="summary-card critical">
-                <div class="card-count">{counts['critical']}</div>
-                <div class="card-label">Críticos</div>
-            </div>
-            <div class="summary-card warning">
-                <div class="card-count">{counts['warning']}</div>
-                <div class="card-label">Avisos</div>
-            </div>
-            <div class="summary-card ok">
-                <div class="card-count">{counts['ok']}</div>
-                <div class="card-label">OK</div>
-            </div>
-            <div class="summary-card" style="border-color:#3a3a3a">
-                <div class="card-count" style="color:#888">{total}</div>
-                <div class="card-label">Total de Checks</div>
-            </div>
-        </div>
-    </div>
-    """
-
-    # ── Módulos ───────────────────────────────────────────────────────────────
     MODULE_TYPES = [
         "password", "inactive", "groups", "kerberoast", "delegation",
         "krbtgt", "domain_policy", "os_inventory", "domain_trusts", "adminsdholder",
     ]
-    modules_html = ""
+
+    SEV_ORDER = {"critical": 0, "warning": 1, "ok": 2, "info": 3}
+
+    def _module_severity(module: dict) -> str:
+        checks = module.get("checks", [])
+        if not checks:
+            return "ok"
+        return min(checks, key=lambda c: SEV_ORDER.get(c.get("severity", "ok"), 3)).get("severity", "ok")
+
+    # ── Sidebar nav items ─────────────────────────────────────────────────────
+    nav_items = """<a class="nav-item is-dashboard active" data-view="dashboard" onclick="navigate(this)">
+        <span class="nav-label" style="color:inherit">⊞ &nbsp;Dashboard</span>
+    </a>
+    <div class="nav-section-label">// Módulos</div>"""
+
     for i, module in enumerate(all_modules):
-        module_type = MODULE_TYPES[i] if i < len(MODULE_TYPES) else "generic"
-        checks_html = "".join(
-            _render_check_card(check, module_type)
-            for check in module.get("checks", [])
-        )
-        modules_html += f"""
-        <div class="module-section">
-            <div class="module-header">
-                <span class="module-number">MOD-{i+1:02d}</span>
-                <h2 class="module-title">{module.get('module_name', f'Módulo {i+1}')}</h2>
-            </div>
-            {checks_html}
+        sev  = _module_severity(module)
+        name = module.get("module_name", f"Módulo {i+1}")
+        nav_items += f"""
+    <a class="nav-item" data-view="module-{i}" onclick="navigate(this)">
+        <span class="nav-dot {sev}"></span>
+        <span class="nav-num">{i+1:02d}</span>
+        <span class="nav-label">{name}</span>
+    </a>"""
+
+    # ── Module views ──────────────────────────────────────────────────────────
+    module_views = ""
+    for i, module in enumerate(all_modules):
+        mtype       = MODULE_TYPES[i] if i < len(MODULE_TYPES) else "generic"
+        name        = module.get("module_name", f"Módulo {i+1}")
+        checks_html = "".join(_render_check_card(c, mtype) for c in module.get("checks", []))
+        module_views += f"""
+    <div class="view" id="view-module-{i}">
+        <div class="content-header">
+            <div class="content-label">MOD-{i+1:02d}</div>
+            <h1>{name}</h1>
         </div>
-        """
+        <div class="content-body">{checks_html}</div>
+    </div>"""
+
+    # ── Dashboard overview table ───────────────────────────────────────────────
+    overview_rows = ""
+    for i, module in enumerate(all_modules):
+        sev        = _module_severity(module)
+        sev_cfg    = SEVERITY_CONFIG.get(sev, SEVERITY_CONFIG["ok"])
+        name       = module.get("module_name", f"Módulo {i+1}")
+        checks     = module.get("checks", [])
+        n_crit     = sum(1 for c in checks if c.get("severity") == "critical")
+        n_warn     = sum(1 for c in checks if c.get("severity") == "warning")
+        n_ok       = sum(1 for c in checks if c.get("severity") == "ok")
+        crit_html  = f'<span style="color:#ef4444;font-family:var(--font-mono)">{n_crit}</span>' if n_crit else '<span style="color:#333">—</span>'
+        warn_html  = f'<span style="color:#f97316;font-family:var(--font-mono)">{n_warn}</span>' if n_warn else '<span style="color:#333">—</span>'
+        ok_html    = f'<span style="color:#22c55e;font-family:var(--font-mono)">{n_ok}</span>'   if n_ok   else '<span style="color:#333">—</span>'
+        overview_rows += f"""
+        <tr class="module-row" onclick="navigateToModule('module-{i}')">
+            <td class="mono" style="color:var(--accent)">MOD-{i+1:02d}</td>
+            <td>{name}</td>
+            <td>{_severity_badge(sev)}</td>
+            <td>{crit_html}</td>
+            <td>{warn_html}</td>
+            <td>{ok_html}</td>
+        </tr>"""
+
+    dashboard_view = f"""
+    <div class="view active" id="view-dashboard">
+        <div class="content-header">
+            <div class="content-label">// Security Audit Report</div>
+            <h1>Active Directory Security Audit</h1>
+            <div class="header-meta-bar">
+                <span>Domínio: <b>{config.DOMAIN}</b></span>
+                <span>DC: <b>{config.DC_HOST}</b></span>
+                <span>Base DN: <b>{config.BASE_DN}</b></span>
+                <span>Auditado como: <b>{config.USERNAME}</b></span>
+                <span>Gerado em: <b>{timestamp}</b></span>
+            </div>
+        </div>
+        <div class="content-body">
+            <div class="dashboard-grid">
+                <div class="dashboard-card critical">
+                    <div class="dash-count">{counts['critical']}</div>
+                    <div class="dash-label">Críticos</div>
+                </div>
+                <div class="dashboard-card warning">
+                    <div class="dash-count">{counts['warning']}</div>
+                    <div class="dash-label">Avisos</div>
+                </div>
+                <div class="dashboard-card ok">
+                    <div class="dash-count">{counts['ok']}</div>
+                    <div class="dash-label">OK</div>
+                </div>
+                <div class="dashboard-card neutral">
+                    <div class="dash-count">{total}</div>
+                    <div class="dash-label">Total de Checks</div>
+                </div>
+            </div>
+
+            <div class="section-label">// Resumo por Módulo</div>
+            <div class="table-wrapper">
+            <table>
+                <thead><tr>
+                    <th>Módulo</th><th>Nome</th><th>Severidade</th>
+                    <th>Críticos</th><th>Avisos</th><th>OK</th>
+                </tr></thead>
+                <tbody>{overview_rows}</tbody>
+            </table>
+            </div>
+        </div>
+    </div>"""
 
     # ── HTML Final ────────────────────────────────────────────────────────────
-    html = f"""<!DOCTYPE html>
+    return f"""<!DOCTYPE html>
 <html lang="pt">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AD Security Audit Report — {config.DOMAIN}</title>
+    <title>AD Audit — {config.DOMAIN} — {date_str}</title>
     <style>{_get_css()}</style>
 </head>
 <body>
-    <div class="header">
-        <div class="header-label">// Security Audit Report</div>
-        <h1>Active Directory Security Audit</h1>
-        <div class="header-meta">
-            <span>Domínio: <b>{config.DOMAIN}</b></span>
-            <span>DC: <b>{config.DC_HOST}</b></span>
-            <span>Base DN: <b>{config.BASE_DN}</b></span>
-            <span>Auditado como: <b>{config.USERNAME}</b></span>
-            <span>Gerado em: <b>{timestamp}</b></span>
+<div class="layout">
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-label">// AD Security Audit</div>
+            <div class="brand-domain">{config.DOMAIN}</div>
+            <div class="brand-meta">{config.DC_HOST} &nbsp;·&nbsp; {date_str}</div>
         </div>
-    </div>
+        <div class="sidebar-stats">
+            <div class="stat critical">
+                <span class="stat-num">{counts['critical']}</span>
+                <span class="stat-label">Críticos</span>
+            </div>
+            <div class="stat warning">
+                <span class="stat-num">{counts['warning']}</span>
+                <span class="stat-label">Avisos</span>
+            </div>
+            <div class="stat ok">
+                <span class="stat-num">{counts['ok']}</span>
+                <span class="stat-label">OK</span>
+            </div>
+        </div>
+        <nav class="sidebar-nav" id="sidebar-nav">
+            {nav_items}
+        </nav>
+        <div class="sidebar-footer">Projeto Final &nbsp;·&nbsp; SIRC</div>
+    </aside>
 
-    <div class="container">
-        {summary_html}
-        {modules_html}
-    </div>
-
-    <div class="footer">
-        <span>AD Security Auditor — Projeto Final de Licenciatura</span>
-        <span>{timestamp}</span>
-    </div>
+    <main class="content" id="main-content">
+        {dashboard_view}
+        {module_views}
+    </main>
+</div>
+<script>{_get_js()}</script>
 </body>
 </html>"""
-
-    return html
 
 
 def save(all_modules: list, output_path: str = None) -> str:
