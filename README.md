@@ -8,12 +8,18 @@ Ferramenta de auditoria de segurança para Active Directory via LDAP. Identifica
 
 ## O que audita
 
-| Módulo | Checks |
-|--------|--------|
-| **1 — Políticas de Password** | Contas com password não obrigatória (PASSWD_NOTREQD), passwords sem expiração (DONT_EXPIRE_PASSWORD), passwords antigas (> 90 dias), contas vulneráveis a ASREPRoasting (DONT_REQ_PREAUTH) |
-| **2 — Contas Inativas** | Utilizadores sem login há mais de 90 dias, computadores inativos, contas desativadas ainda presentes no AD |
-| **3 — Grupos Privilegiados** | Membros de Domain Admins, Enterprise Admins, Schema Admins, Administrators, Account Operators, Backup Operators, Group Policy Creator Owners |
-| **4 — Kerberoasting** | Utilizadores com `servicePrincipalName` definido, classificados por risco (password antiga, membro de grupo privilegiado) |
+| Módulo | Área | Checks |
+|--------|------|--------|
+| **1 — Políticas de Password** | Contas | Contas com password não obrigatória (PASSWD_NOTREQD), passwords sem expiração (DONT_EXPIRE_PASSWORD), passwords antigas (> 90 dias), contas vulneráveis a ASREPRoasting (DONT_REQ_PREAUTH) |
+| **2 — Contas Inativas** | Contas | Utilizadores sem login há mais de 90 dias, computadores inativos, contas desativadas ainda presentes no AD |
+| **3 — Grupos Privilegiados** | Controlo de Acesso | Membros de Domain Admins, Enterprise Admins, Schema Admins, Administrators, Account Operators, Backup Operators, Group Policy Creator Owners |
+| **4 — Kerberoasting** | Kerberos | Utilizadores com `servicePrincipalName` definido, classificados por risco (password antiga, membro de grupo privilegiado) |
+| **5 — Delegação Kerberos** | Kerberos | Unconstrained delegation (recebe TGTs completos), constrained delegation, protocol transition (impersonation sem pré-auth) |
+| **6 — Conta krbtgt** | Kerberos | Idade da password da conta krbtgt — base dos Golden Tickets; crítico se > 365 dias ou `pwdLastSet=0` |
+| **7 — Política de Password** | Configuração | Default Domain Password Policy (comprimento, complexidade, histórico, bloqueio), Fine-Grained Password Policies (PSOs) |
+| **8 — Inventário SO / EOL** | Infraestrutura | Sistemas operativos de todos os computadores do domínio; classifica EOL (XP/Vista/7/Server 2003/2008), Legacy (8.1/Server 2012) e Atual |
+| **9 — Domain Trusts** | Infraestrutura | Relações de confiança inter-domínio: tipo, direção, estado do SID filtering (QUARANTINE_DOMAIN) — trusts sem SID filtering são vulneráveis a SID History attacks |
+| **10 — AdminSDHolder** | Persistência | Contas com `adminCount=1` que já não pertencem a nenhum grupo privilegiado — "orphaned", retêm ACLs restritivos do SDProp e podem ser usadas para persistência |
 
 O resultado é um relatório HTML autónomo com dashboard de severidade, exportável sem dependências externas.
 
@@ -204,7 +210,13 @@ ad_auditor/
 │   ├── password_policy.py    # Módulo 1: flags UAC e ASREPRoasting
 │   ├── inactive_accounts.py  # Módulo 2: contas/computadores inativos
 │   ├── privileged_groups.py  # Módulo 3: membros de grupos críticos
-│   └── kerberoasting.py      # Módulo 4: SPNs em contas de utilizador
+│   ├── kerberoasting.py      # Módulo 4: SPNs em contas de utilizador
+│   ├── delegation.py         # Módulo 5: delegação Kerberos (unconstrained/constrained)
+│   ├── krbtgt_check.py       # Módulo 6: idade da password da conta krbtgt
+│   ├── domain_policy.py      # Módulo 7: Default Domain Policy e PSOs
+│   ├── os_inventory.py       # Módulo 8: inventário SO e sistemas EOL
+│   ├── domain_trusts.py      # Módulo 9: domain trusts e SID filtering
+│   └── adminsdholder.py      # Módulo 10: contas adminCount orphaned
 ├── reporter/
 │   └── html_report.py        # Geração do relatório HTML standalone
 └── output/

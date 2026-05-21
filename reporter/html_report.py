@@ -610,6 +610,163 @@ def _render_domain_policy_table(check: dict) -> str:
     """
 
 
+def _render_os_inventory_table(check: dict) -> str:
+    """Tabela de inventário SO — sumário por OS e lista de máquinas."""
+    computers = check.get("computers", [])
+    os_summary = check.get("os_summary", [])
+
+    if not computers:
+        return '<div class="empty-state">✓ Nenhum computador encontrado no domínio</div>'
+
+    STATUS_STYLE = {
+        "eol":     ("risk-critical", "🔴 EOL"),
+        "legacy":  ("risk-warning",  "🟡 Legacy"),
+        "current": ("status-active", "🟢 Atual"),
+        "unknown": ("",              "⚪ Desconhecido"),
+    }
+
+    # Sumário por OS
+    summary_rows = []
+    for os_entry in os_summary:
+        cls, label = STATUS_STYLE.get(os_entry.get("status", "unknown"), ("", ""))
+        summary_rows.append(f"""
+        <tr>
+            <td>{os_entry.get('os', 'N/A')}</td>
+            <td class='mono'>{os_entry.get('count', 0)}</td>
+            <td class='{cls}'>{label}</td>
+        </tr>""")
+
+    summary_table = f"""
+    <div style="padding:12px 20px 4px;font-family:var(--font-mono);font-size:11px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase">
+        Sumário por Sistema Operativo
+    </div>
+    <div class="table-wrapper">
+    <table>
+        <thead><tr><th>Sistema Operativo</th><th>Máquinas</th><th>Classificação</th></tr></thead>
+        <tbody>{''.join(summary_rows)}</tbody>
+    </table>
+    </div>
+    <div style="padding:12px 20px 4px;font-family:var(--font-mono);font-size:11px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase">
+        Detalhe por Máquina
+    </div>"""
+
+    # Detalhe por máquina
+    detail_rows = []
+    for c in computers:
+        cls, label = STATUS_STYLE.get(c.get("status", "unknown"), ("", ""))
+        disabled_html = '<span class="status-disabled">Desativado</span>' if c.get("disabled") else '<span class="status-active">Ativo</span>'
+        detail_rows.append(f"""
+        <tr>
+            <td class='mono'>{c.get('name', 'N/A')}</td>
+            <td>{c.get('os', 'N/A')}</td>
+            <td class='mono'>{c.get('os_version', 'N/A')}</td>
+            <td>{c.get('last_logon', 'N/A')}</td>
+            <td>{disabled_html}</td>
+            <td class='{cls}'>{label}</td>
+        </tr>""")
+
+    detail_table = f"""
+    <div class="table-wrapper">
+    <table>
+        <thead><tr><th>Hostname</th><th>Sistema Operativo</th><th>Versão</th><th>Último Login</th><th>Estado</th><th>Classificação</th></tr></thead>
+        <tbody>{''.join(detail_rows)}</tbody>
+    </table>
+    </div>"""
+
+    return summary_table + detail_table
+
+
+def _render_domain_trusts_table(check: dict) -> str:
+    """Tabela de domain trusts com avaliação de risco."""
+    trusts = check.get("trusts", [])
+
+    if not trusts:
+        return '<div class="empty-state">✓ Nenhuma relação de confiança configurada neste domínio</div>'
+
+    rows = []
+    for t in trusts:
+        sid_html = (
+            '<span class="status-active">Sim</span>'
+            if t.get("sid_filtering")
+            else '<span class="risk-critical">Não ⚠</span>'
+        )
+        flags = t.get("flags", [])
+        flags_html = (
+            " ".join(f"<span class='tag'>{f}</span>" for f in flags)
+            if flags else '<span style="color:#888">—</span>'
+        )
+        risk_html = (
+            '<span class="risk-critical">⚠ SID Attack</span>'
+            if t.get("risky")
+            else '<span style="color:#888">—</span>'
+        )
+        rows.append(f"""
+        <tr>
+            <td class='mono'>{t.get('name', 'N/A')}</td>
+            <td class='mono'>{t.get('flat_name', 'N/A')}</td>
+            <td>{t.get('trust_type', 'N/A')}</td>
+            <td>{t.get('direction', 'N/A')}</td>
+            <td>{sid_html}</td>
+            <td><div class='tag-list'>{flags_html}</div></td>
+            <td>{risk_html}</td>
+        </tr>""")
+
+    return f"""
+    <div class="table-wrapper">
+    <table>
+        <thead><tr>
+            <th>Domínio</th>
+            <th>NetBIOS</th>
+            <th>Tipo</th>
+            <th>Direção</th>
+            <th>SID Filtering</th>
+            <th>Atributos</th>
+            <th>Risco</th>
+        </tr></thead>
+        <tbody>{''.join(rows)}</tbody>
+    </table>
+    </div>
+    """
+
+
+def _render_adminsdholder_table(check: dict) -> str:
+    """Tabela de contas orphaned com adminCount=1."""
+    accounts = check.get("accounts", [])
+    total    = check.get("total_admin_count", 0)
+    active   = check.get("active_privileged", 0)
+    orphaned = len(accounts)
+
+    stats_html = f"""
+    <div style="display:flex;gap:24px;padding:12px 20px;border-bottom:1px solid var(--border);font-size:13px;">
+        <span>Total adminCount=1: <b class='mono'>{total}</b></span>
+        <span>Em grupos privilegiados: <b class='mono' style='color:#22c55e'>{active}</b></span>
+        <span>Orphaned: <b class='mono {"risk-critical" if orphaned > 0 else "status-active"}'>{orphaned}</b></span>
+    </div>"""
+
+    if not accounts:
+        return stats_html + '<div class="empty-state">✓ Nenhuma conta orphaned — todas as contas com adminCount=1 pertencem a grupos privilegiados</div>'
+
+    rows = []
+    for a in accounts:
+        disabled_html = '<span class="status-disabled">Desativado</span>' if a.get("disabled") else '<span class="status-active">Ativo</span>'
+        rows.append(f"""
+        <tr>
+            <td class='mono'>{a.get('username', 'N/A')}</td>
+            <td>{a.get('name', 'N/A')}</td>
+            <td style='font-size:11px;color:#888'>{a.get('dn', 'N/A')}</td>
+            <td>{disabled_html}</td>
+        </tr>""")
+
+    return stats_html + f"""
+    <div class="table-wrapper">
+    <table>
+        <thead><tr><th>Username</th><th>Nome</th><th>Distinguished Name</th><th>Estado</th></tr></thead>
+        <tbody>{''.join(rows)}</tbody>
+    </table>
+    </div>
+    """
+
+
 def _render_check_card(check: dict, module_type: str) -> str:
     """Renderiza um check card completo com header, descrição e tabela."""
     severity  = check.get("severity", "ok")
@@ -633,6 +790,12 @@ def _render_check_card(check: dict, module_type: str) -> str:
         table_html = _render_krbtgt_info(check)
     elif module_type == "domain_policy":
         table_html = _render_domain_policy_table(check)
+    elif module_type == "os_inventory":
+        table_html = _render_os_inventory_table(check)
+    elif module_type == "domain_trusts":
+        table_html = _render_domain_trusts_table(check)
+    elif module_type == "adminsdholder":
+        table_html = _render_adminsdholder_table(check)
     else:
         table_html = '<div class="empty-state">Sem dados</div>'
 
@@ -706,7 +869,10 @@ def generate(all_modules: list) -> str:
     """
 
     # ── Módulos ───────────────────────────────────────────────────────────────
-    MODULE_TYPES = ["password", "inactive", "groups", "kerberoast", "delegation", "krbtgt", "domain_policy"]
+    MODULE_TYPES = [
+        "password", "inactive", "groups", "kerberoast", "delegation",
+        "krbtgt", "domain_policy", "os_inventory", "domain_trusts", "adminsdholder",
+    ]
     modules_html = ""
     for i, module in enumerate(all_modules):
         module_type = MODULE_TYPES[i] if i < len(MODULE_TYPES) else "generic"

@@ -101,6 +101,7 @@ def main():
     from modules import (
         password_policy, inactive_accounts, privileged_groups,
         kerberoasting, delegation, krbtgt_check, domain_policy,
+        os_inventory, domain_trusts, adminsdholder,
     )
 
     all_results = []
@@ -132,6 +133,18 @@ def main():
 
         # Módulo 7: Política de Password do Domínio
         all_results.append(domain_policy.run(conn))
+        print()
+
+        # Módulo 8: Inventário de Sistemas Operativos / EOL
+        all_results.append(os_inventory.run(conn))
+        print()
+
+        # Módulo 9: Domain Trusts
+        all_results.append(domain_trusts.run(conn))
+        print()
+
+        # Módulo 10: AdminSDHolder / Orphaned adminCount
+        all_results.append(adminsdholder.run(conn))
         print()
 
     except KeyboardInterrupt:
