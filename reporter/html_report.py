@@ -402,6 +402,28 @@ def _get_css() -> str:
         color: var(--text-muted);
         font-size: 13px;
     }
+
+    /* ── Export button ── */
+    .export-btn {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: #555;
+        background: transparent;
+        border: 1px solid #252525;
+        padding: 6px 13px;
+        border-radius: 4px;
+        cursor: pointer;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+        flex-shrink: 0;
+        align-self: center;
+        transition: color 0.15s, border-color 0.15s, background 0.15s;
+    }
+    .export-btn:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+        background: rgba(0,212,255,0.05);
+    }
     """
 
 
@@ -419,6 +441,34 @@ def _get_js() -> str:
     function navigateToModule(viewId) {
         var navItem = document.querySelector('[data-view="' + viewId + '"]');
         if (navItem) navigate(navItem);
+    }
+    function exportModuleCSV(viewId, filename) {
+        var view = document.getElementById('view-' + viewId);
+        if (!view) return;
+        var tables = view.querySelectorAll('table');
+        if (!tables.length) return;
+        var allRows = [];
+        tables.forEach(function(table, idx) {
+            if (idx > 0) allRows.push([]);
+            table.querySelectorAll('tr').forEach(function(row) {
+                var cols = row.querySelectorAll('th, td');
+                var rowData = Array.from(cols).map(function(col) {
+                    var text = (col.innerText || col.textContent || '').trim()
+                        .replace(/\n+/g, ' ').replace(/"/g, '""');
+                    return '"' + text + '"';
+                });
+                if (rowData.length) allRows.push(rowData);
+            });
+        });
+        var csv = '﻿' + allRows.map(function(r) { return r.join(','); }).join('\n');
+        var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.setAttribute('download', filename);
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(a.href);
     }
     """
 
@@ -1024,12 +1074,18 @@ def generate(all_modules: list) -> str:
     for i, module in enumerate(all_modules):
         mtype       = MODULE_TYPES[i] if i < len(MODULE_TYPES) else "generic"
         name        = module.get("module_name", f"Módulo {i+1}")
+        safe_name   = name.replace(" ", "-").replace("/", "-").replace("\\", "-")
         checks_html = "".join(_render_check_card(c, mtype) for c in module.get("checks", []))
         module_views += f"""
     <div class="view" id="view-module-{i}">
         <div class="content-header">
-            <div class="content-label">MOD-{i+1:02d}</div>
-            <h1>{name}</h1>
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px">
+                <div>
+                    <div class="content-label">MOD-{i+1:02d}</div>
+                    <h1>{name}</h1>
+                </div>
+                <button class="export-btn" onclick="exportModuleCSV('module-{i}','{safe_name}-{date_str}.csv')">↓ Exportar CSV</button>
+            </div>
         </div>
         <div class="content-body">{checks_html}</div>
     </div>"""

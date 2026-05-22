@@ -163,12 +163,50 @@ def _get_group_description(group_name: str) -> str:
     return descriptions.get(group_name, f"Grupo privilegiado: {group_name}")
 
 
+def _discover_privileged_groups(conn: Connection) -> list[str]:
+    """
+    Auto-descobre grupos privilegiados via adminCount=1.
+
+    O processo SDProp define adminCount=1 em todos os grupos que protege —
+    built-ins (Domain Admins, etc.) e grupos personalizados aninhados em
+    grupos protegidos. Independente do idioma do servidor.
+
+    Fallback para config.PRIVILEGED_GROUPS se a query falhar ou retornar vazio.
+    """
+    try:
+        conn.search(
+            search_base=config.BASE_DN,
+            search_filter="(&(objectClass=group)(adminCount=1))",
+            search_scope=SUBTREE,
+            attributes=["sAMAccountName", "cn"],
+            size_limit=0,
+            time_limit=15,
+        )
+        names = []
+        for entry in conn.entries:
+            sam  = get_attr(entry, "sAMAccountName", None)
+            cn   = get_attr(entry, "cn", None)
+            name = str(sam or cn or "").strip()
+            if name:
+                names.append(name)
+        if names:
+            return sorted(names)
+    except LDAPExceptionError as e:
+        print(f"  [!] Erro ao descobrir grupos via adminCount: {e}")
+
+    print("  [!] Fallback: usando lista de grupos do config.py")
+    return list(config.PRIVILEGED_GROUPS)
+
+
 def run(conn: Connection) -> dict:
     """Ponto de entrada do módulo."""
     print("[*] Módulo 3: Mapeamento de Grupos Privilegiados...")
 
+    group_names = _discover_privileged_groups(conn)
+    print(f"  [→] {len(group_names)} grupos privilegiados identificados")
+
     checks = []
-    for group_name in config.PRIVILEGED_GROUPS:
+    for group_name in group_names:
         result = get_group_members(conn, group_name)
         checks.append(result)
         icon = {"critical": "🔴", "warning": "🟡", "ok": "🟢"}.get(result["severity"], "⚪")
