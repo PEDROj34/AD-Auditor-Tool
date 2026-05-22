@@ -87,6 +87,16 @@ PASSWORD  = "P@ssword123"
 INACTIVE_DAYS       = 90      # Dias sem login para considerar conta inativa
 OLD_PASSWORD_DAYS   = 90      # Dias sem alteração de password para aviso
 REPORT_OUTPUT_PATH  = "output/report.html"
+
+PRIVILEGED_GROUPS = [         # Grupos auditados pelo Módulo 3
+    "Domain Admins",
+    "Enterprise Admins",
+    "Schema Admins",
+    "Administrators",
+    "Account Operators",
+    "Backup Operators",
+    "Group Policy Creator Owners",
+]
 ```
 
 > **Segurança:** nunca commites o `config.py` com credenciais reais. Usa sempre a Opção A em pipelines ou ambientes partilhados.
