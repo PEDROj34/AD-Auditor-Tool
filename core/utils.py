@@ -47,13 +47,23 @@ def filetime_to_datetime(filetime_value) -> datetime | None:
       - 9223372036854775807 (0x7FFFFFFFFFFFFFFF): "nunca expira"
 
     Args:
-        filetime_value: valor FILETIME como int ou string
+        filetime_value: valor FILETIME como int, string, ou datetime
+            (o ldap3 com get_info="ALL" pode devolver datetime já parseado)
 
     Returns:
         datetime (UTC) ou None se o valor for inválido/especial
     """
-    if not filetime_value:
+    if filetime_value is None:
         return None
+
+    # ldap3 com schema carregado pode devolver o valor já como datetime
+    if isinstance(filetime_value, datetime):
+        if filetime_value.year <= 1601:
+            return None
+        if filetime_value.tzinfo is None:
+            return filetime_value.replace(tzinfo=timezone.utc)
+        return filetime_value
+
     try:
         ft = int(filetime_value)
         # Valores especiais do AD
