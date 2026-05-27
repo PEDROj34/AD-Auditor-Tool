@@ -55,40 +55,32 @@ pip install -r requirements.txt
 
 ## Configuração
 
-### Opção A — Argumentos de linha de comandos (recomendado em produção)
+### `config.py` — obrigatório
 
-Não é necessário editar nenhum ficheiro. Todas as opções são passadas diretamente:
+O ficheiro `config.py` **tem de existir e estar configurado** antes de executar a ferramenta. Todos os módulos importam-no directamente para ler os parâmetros de ligação, limiares de auditoria e a lista de grupos privilegiados.
 
-```bash
-python main.py \
-  --dc 10.0.0.1 \
-  --domain empresa.pt \
-  --user auditor \
-  --password "P@ssword123" \
-  --output relatorios/auditoria_2024-06.html
-```
-
-As credenciais nunca ficam gravadas em disco.
-
-### Opção B — Ficheiro `config.py`
-
-Para uso em ambiente de lab ou execução repetida, podes editar o `config.py` diretamente:
+Edita os valores para o teu ambiente:
 
 ```python
+# ─── Ligação ao Domain Controller ────────────────────────────────────────────
 DC_HOST   = "10.0.0.1"        # IP ou hostname do Domain Controller
 DC_PORT   = 389               # 389 = LDAP, 636 = LDAPS
 USE_SSL   = False             # True para LDAPS (porta 636)
 USE_TLS   = False             # STARTTLS sobre porta 389
 
+# ─── Credenciais ──────────────────────────────────────────────────────────────
 DOMAIN    = "empresa.pt"      # FQDN do domínio
 USERNAME  = "auditor"         # sAMAccountName (só o username, sem domínio)
-PASSWORD  = "P@ssword123"
+PASSWORD  = "P@ssword123"     # Nunca commitar em produção
 
+# ─── Limiares de auditoria ────────────────────────────────────────────────────
 INACTIVE_DAYS       = 90      # Dias sem login para considerar conta inativa
 OLD_PASSWORD_DAYS   = 90      # Dias sem alteração de password para aviso
 REPORT_OUTPUT_PATH  = "output/report.html"
 
-PRIVILEGED_GROUPS = [         # Grupos auditados pelo Módulo 3
+# ─── Fallback de grupos privilegiados (Módulo 3) ─────────────────────────────
+# Usado apenas se a auto-descoberta via adminCount=1 falhar.
+PRIVILEGED_GROUPS = [
     "Domain Admins",
     "Enterprise Admins",
     "Schema Admins",
@@ -99,7 +91,22 @@ PRIVILEGED_GROUPS = [         # Grupos auditados pelo Módulo 3
 ]
 ```
 
-> **Segurança:** nunca commites o `config.py` com credenciais reais. Usa sempre a Opção A em pipelines ou ambientes partilhados.
+> **Segurança:** nunca commites o `config.py` com credenciais reais. Adiciona-o ao `.gitignore` em ambientes partilhados.
+
+### Argumentos de linha de comandos — substituição pontual
+
+Os argumentos CLI sobrepõem-se aos valores do `config.py` no momento da execução, mas **não substituem o ficheiro** — o `config.py` continua a ser necessário. Útil para mudar o alvo sem editar o ficheiro:
+
+```bash
+python main.py \
+  --dc 10.0.0.1 \
+  --domain empresa.pt \
+  --user auditor \
+  --password "P@ssword123" \
+  --output relatorios/auditoria_2024-06.html
+```
+
+Os parâmetros `PRIVILEGED_GROUPS`, `INACTIVE_DAYS` e `OLD_PASSWORD_DAYS` **só são configuráveis via `config.py`** — não têm equivalente em linha de comandos (excepto `--inactive-days`).
 
 ---
 
