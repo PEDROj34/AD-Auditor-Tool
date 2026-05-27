@@ -454,13 +454,13 @@ def _get_js() -> str:
                 var cols = row.querySelectorAll('th, td');
                 var rowData = Array.from(cols).map(function(col) {
                     var text = (col.innerText || col.textContent || '').trim()
-                        .replace(/\n+/g, ' ').replace(/"/g, '""');
+                        .replace(/\\n+/g, ' ').replace(/"/g, '""');
                     return '"' + text + '"';
                 });
                 if (rowData.length) allRows.push(rowData);
             });
         });
-        var csv = '﻿' + allRows.map(function(r) { return r.join(','); }).join('\n');
+        var csv = '\\uFEFF' + allRows.map(function(r) { return r.join(';'); }).join('\\n');
         var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         var a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
