@@ -16,13 +16,11 @@ Tipos de delegação:
 
 from ldap3 import Connection, SUBTREE
 from ldap3.core.exceptions import LDAPExceptionError
-from core.utils import filetime_to_datetime, format_date, get_attr, get_display_name
+from core.utils import filetime_to_datetime, format_date, get_attr, get_display_name, sev_icon
 import config
 
 # Valores dos flags UAC relevantes (inteiro)
-_FLAG_UNCONSTRAINED       = 0x80000    # TRUSTED_FOR_DELEGATION
 _FLAG_PROTO_TRANSITION    = 0x1000000  # TRUSTED_TO_AUTH_FOR_DELEGATION
-_FLAG_DC                  = 0x2000     # SERVER_TRUST_ACCOUNT (Domain Controllers)
 
 _USER_ATTRS = [
     "sAMAccountName", "displayName", "givenName", "sn", "cn",
@@ -209,7 +207,7 @@ def run(conn: Connection) -> dict:
     ]
 
     for check in checks:
-        icon = {"critical": "🔴", "warning": "🟡", "ok": "🟢"}.get(check["severity"], "⚪")
+        icon = sev_icon(check["severity"])
         print(f"  {icon} {check['title']}: {check['count']} encontrado(s)")
 
     return {

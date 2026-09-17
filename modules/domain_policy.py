@@ -19,7 +19,7 @@ Conversão de atributos Large Integer:
 
 from ldap3 import Connection, SUBTREE, BASE
 from ldap3.core.exceptions import LDAPExceptionError
-from core.utils import get_attr
+from core.utils import get_attr, sev_icon
 import config
 
 
@@ -218,12 +218,10 @@ def get_default_policy(conn: Connection) -> dict:
     raw = {
         "min_pwd_length":         int(get_attr(entry, "minPwdLength", 0)         or 0),
         "max_pwd_age_days":       _large_int_to_days(get_attr(entry, "maxPwdAge", None)),
-        "min_pwd_age_days":       _large_int_to_days(get_attr(entry, "minPwdAge", None)),
         "pwd_history_length":     int(get_attr(entry, "pwdHistoryLength", 0)      or 0),
         "complexity_enabled":     bool(pwd_props & 1),
         "lockout_threshold":      int(get_attr(entry, "lockoutThreshold", 0)      or 0),
         "lockout_duration_minutes":    _large_int_to_minutes(get_attr(entry, "lockoutDuration", None)),
-        "lockout_observation_minutes": _large_int_to_minutes(get_attr(entry, "lockoutObservationWindow", None)),
     }
 
     settings, severity = _evaluate_settings(raw)
@@ -319,7 +317,7 @@ def run(conn: Connection) -> dict:
     ]
 
     for check in checks:
-        icon = {"critical": "🔴", "warning": "🟡", "ok": "🟢", "info": "🔵"}.get(check["severity"], "⚪")
+        icon = sev_icon(check["severity"])
         print(f"  {icon} {check['title']}: {check.get('count_label', check['count'])}")
 
     return {

@@ -21,8 +21,7 @@ Porquê estes filtros LDAP:
 from ldap3 import Connection, SUBTREE
 from ldap3.core.exceptions import LDAPExceptionError
 from core.utils import (
-    filetime_to_datetime, days_since, has_uac_flag,
-    format_date, get_attr, get_display_name, UAC_FLAGS
+    filetime_to_datetime, days_since, format_date, get_attr, get_display_name, sev_icon
 )
 import config
 
@@ -281,7 +280,7 @@ def run(conn: Connection) -> dict:
     }
 
     for check in results["checks"]:
-        icon = {"critical": "🔴", "warning": "🟡", "ok": "🟢"}.get(check["severity"], "⚪")
+        icon = sev_icon(check["severity"])
         print(f"  {icon} {check['title']}: {check['count']} encontrado(s)")
 
     return results

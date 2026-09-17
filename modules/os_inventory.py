@@ -12,7 +12,7 @@ Classificação:
 
 from ldap3 import Connection, SUBTREE
 from ldap3.core.exceptions import LDAPExceptionError
-from core.utils import get_attr, filetime_to_datetime, format_date
+from core.utils import get_attr, filetime_to_datetime, format_date, sev_icon
 import config
 
 
@@ -45,7 +45,12 @@ def _classify_os(os_name: str) -> str:
 
 
 def get_os_inventory(conn: Connection) -> dict:
-    """Queries computer objects and audits OS versions for EOL/legacy systems."""
+    """
+    Recolhe todos os objetos computador do AD e classifica o SO como EOL, legacy ou atual.
+
+    Qualquer utilizador autenticado pode ler o atributo operatingSystem via LDAP —
+    o AD não restringe este atributo por omissão.
+    """
     try:
         conn.search(
             search_base=config.BASE_DN,
@@ -137,7 +142,7 @@ def run(conn: Connection) -> dict:
     print("[*] Módulo 8: Inventário de Sistemas Operativos / EOL...")
 
     check = get_os_inventory(conn)
-    icon  = {"critical": "🔴", "warning": "🟡", "ok": "🟢"}.get(check["severity"], "⚪")
+    icon = sev_icon(check["severity"])
     print(f"  {icon} Computadores: {check['total']} total — {check['count_label']}")
 
     return {

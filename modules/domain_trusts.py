@@ -13,7 +13,7 @@ Riscos principais:
 
 from ldap3 import Connection, SUBTREE
 from ldap3.core.exceptions import LDAPExceptionError
-from core.utils import get_attr
+from core.utils import get_attr, sev_icon
 import config
 
 
@@ -32,7 +32,6 @@ _TRUST_DIRECTION = {
 
 # trustAttributes bitmask (MS-ADTS)
 _ATTR_NON_TRANSITIVE    = 0x1
-_ATTR_UPLEVEL_ONLY      = 0x2
 _ATTR_QUARANTINED       = 0x4   # SID Filtering ativo
 _ATTR_FOREST_TRANSITIVE = 0x8
 _ATTR_CROSS_ORG         = 0x10
@@ -53,7 +52,12 @@ def _parse_flags(attrs: int) -> list[str]:
 
 
 def get_domain_trusts(conn: Connection) -> dict:
-    """Queries trusted domain objects in CN=System."""
+    """
+    Enumera as relações de confiança do domínio via objetos trustedDomain em CN=System.
+
+    Para cada trust, verifica o bit QUARANTINE_DOMAIN em trustAttributes — indica
+    se o SID Filtering está ativo, impedindo ataques de SID History entre domínios.
+    """
     system_dn = f"CN=System,{config.BASE_DN}"
 
     try:
@@ -130,7 +134,7 @@ def run(conn: Connection) -> dict:
     print("[*] Módulo 9: Análise de Domain Trusts...")
 
     check = get_domain_trusts(conn)
-    icon  = {"critical": "🔴", "warning": "🟡", "ok": "🟢"}.get(check["severity"], "⚪")
+    icon = sev_icon(check["severity"])
     print(f"  {icon} {check['title']}: {check['count_label']}")
 
     return {

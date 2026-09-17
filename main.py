@@ -9,8 +9,8 @@ Uso:
 O script autentica com credenciais de utilizador comum (sem privilégios de admin)
 e executa todos os módulos de auditoria sequencialmente, gerando um relatório HTML.
 
-Perspetiva simulada: utilizador de domínio que acabou de obter acesso inicial
-(ex: phishing, password spraying) ou auditor de segurança interno.
+Objetivo: demonstrar a informação de segurança acessível via LDAP a qualquer
+utilizador autenticado no domínio, sem necessidade de privilégios administrativos.
 """
 
 import argparse

@@ -7,30 +7,8 @@ O AD armazena dados em formatos específicos que precisam de conversão:
   - Distinguished Names: strings longas que precisam de extração do CN
 """
 
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 
-
-# ─── Constantes UAC (UserAccountControl bitmask) ─────────────────────────────
-# Referência: https://learn.microsoft.com/en-us/troubleshoot/windows-server/active-directory/useraccountcontrol-manipulate-account-properties
-UAC_FLAGS = {
-    "SCRIPT":                          0x0001,
-    "ACCOUNTDISABLE":                  0x0002,
-    "HOMEDIR_REQUIRED":                0x0008,
-    "LOCKOUT":                         0x0010,
-    "PASSWD_NOTREQD":                  0x0020,   # Password não obrigatória
-    "PASSWD_CANT_CHANGE":              0x0040,
-    "ENCRYPTED_TEXT_PWD_ALLOWED":      0x0080,
-    "NORMAL_ACCOUNT":                  0x0200,
-    "DONT_EXPIRE_PASSWORD":            0x10000,  # Password nunca expira
-    "PASSWORD_EXPIRED":                0x800000,
-    "TRUSTED_FOR_DELEGATION":          0x80000,  # Kerberos delegation — risco alto
-    "NOT_DELEGATED":                   0x100000,
-    "USE_DES_KEY_ONLY":                0x200000, # Cifra fraca — risco alto
-    "DONT_REQ_PREAUTH":                0x400000, # ASREPRoasting target!
-}
-
-# Epoch do Windows FILETIME: 1 de Janeiro de 1601
-WINDOWS_EPOCH = datetime(1601, 1, 1, tzinfo=timezone.utc)
 # Offset entre Windows epoch e Unix epoch em microsegundos
 EPOCH_DIFF_SECONDS = 11644473600
 
@@ -90,51 +68,6 @@ def days_since(dt: datetime | None) -> int | None:
     return delta.days
 
 
-def has_uac_flag(uac_value, flag_name: str) -> bool:
-    """
-    Verifica se um flag UAC específico está ativo.
-
-    Args:
-        uac_value: valor UAC como int ou string
-        flag_name: nome do flag (ex: "DONT_EXPIRE_PASSWORD")
-
-    Returns:
-        True se o flag estiver ativo, False caso contrário
-    """
-    if uac_value is None:
-        return False
-    try:
-        uac_int = int(uac_value)
-        flag_bit = UAC_FLAGS.get(flag_name, 0)
-        return bool(uac_int & flag_bit)
-    except (ValueError, TypeError):
-        return False
-
-
-def extract_cn(distinguished_name: str) -> str:
-    """
-    Extrai o Common Name (CN) de um Distinguished Name (DN) LDAP.
-
-    Ex: "CN=John Doe,OU=Users,DC=corp,DC=local" → "John Doe"
-
-    Args:
-        distinguished_name: DN completo
-
-    Returns:
-        CN extraído, ou o DN original se a extração falhar
-    """
-    if not distinguished_name:
-        return ""
-    try:
-        parts = distinguished_name.split(",")
-        first = parts[0].strip()
-        if first.upper().startswith("CN="):
-            return first[3:]
-    except (AttributeError, IndexError):
-        pass
-    return distinguished_name
-
-
 def format_date(dt: datetime | None, fmt: str = "%Y-%m-%d") -> str:
     """Formata um datetime para string legível. Devolve 'N/A' se None."""
     if dt is None:
@@ -186,3 +119,8 @@ def get_attr(entry, attr_name: str, default=None):
         return val if val is not None else default
     except Exception:
         return default
+
+
+def sev_icon(severity: str) -> str:
+    """Emoji correspondente à severidade, para o output no terminal."""
+    return {"critical": "🔴", "warning": "🟡", "ok": "🟢", "info": "🔵"}.get(severity, "⚪")

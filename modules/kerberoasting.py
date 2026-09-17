@@ -23,7 +23,7 @@ e aleatórias — praticamente imunes a cracking. O foco são contas de utilizad
 from ldap3 import Connection, SUBTREE
 from ldap3.core.exceptions import LDAPExceptionError
 from core.utils import (
-    filetime_to_datetime, days_since, format_date, get_attr, get_display_name, has_uac_flag
+    filetime_to_datetime, days_since, format_date, get_attr, get_display_name, sev_icon
 )
 import config
 
@@ -162,7 +162,7 @@ def run(conn: Connection) -> dict:
     print("[*] Módulo 4: Análise de SPNs (Kerberoasting)...")
 
     check = get_kerberoastable_users(conn)
-    icon = {"critical": "🔴", "warning": "🟡", "ok": "🟢"}.get(check["severity"], "⚪")
+    icon = sev_icon(check["severity"])
     print(f"  {icon} {check['title']}: {check['count']} encontrado(s)")
 
     return {

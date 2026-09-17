@@ -14,7 +14,7 @@ Estratégia de query:
 
 from ldap3 import Connection, SUBTREE
 from ldap3.core.exceptions import LDAPExceptionError
-from core.utils import filetime_to_datetime, format_date, get_attr, get_display_name, extract_cn
+from core.utils import filetime_to_datetime, format_date, get_attr, get_display_name, sev_icon
 import config
 
 
@@ -209,7 +209,7 @@ def run(conn: Connection) -> dict:
     for group_name in group_names:
         result = get_group_members(conn, group_name)
         checks.append(result)
-        icon = {"critical": "🔴", "warning": "🟡", "ok": "🟢"}.get(result["severity"], "⚪")
+        icon = sev_icon(result["severity"])
         print(f"  {icon} {group_name}: {result['count']} membro(s)")
 
     return {

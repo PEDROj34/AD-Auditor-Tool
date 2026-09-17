@@ -10,7 +10,6 @@ Produz um ficheiro HTML standalone (sem dependências externas) com:
 Design: terminal/security aesthetic — dark theme profissional.
 """
 
-import json
 from datetime import datetime, timezone
 import config
 
@@ -192,15 +191,6 @@ def _get_css() -> str:
         overflow: hidden;
         text-overflow: ellipsis;
         flex: 1;
-    }
-
-    .sidebar-footer {
-        padding: 9px 16px;
-        border-top: 1px solid var(--border-soft);
-        font-family: var(--font-mono);
-        font-size: 9px;
-        color: #222;
-        letter-spacing: 0.5px;
     }
 
     /* ── Content area ── */
@@ -1193,7 +1183,6 @@ def generate(all_modules: list) -> str:
         <nav class="sidebar-nav" id="sidebar-nav">
             {nav_items}
         </nav>
-        <div class="sidebar-footer">Projeto Final &nbsp;·&nbsp; SIRC</div>
     </aside>
 
     <main class="content" id="main-content">

@@ -16,7 +16,7 @@ Nota: A conta krbtgt está sempre desativada no AD — é intencional e não é 
 
 from ldap3 import Connection, SUBTREE
 from ldap3.core.exceptions import LDAPExceptionError
-from core.utils import filetime_to_datetime, days_since, format_date, get_attr
+from core.utils import filetime_to_datetime, days_since, format_date, get_attr, sev_icon
 import config
 
 
@@ -102,7 +102,7 @@ def run(conn: Connection) -> dict:
     print("[*] Módulo 6: Auditoria da Conta krbtgt...")
 
     check = get_krbtgt_info(conn)
-    icon  = {"critical": "🔴", "warning": "🟡", "ok": "🟢"}.get(check["severity"], "⚪")
+    icon = sev_icon(check["severity"])
 
     if check["krbtgt"]:
         age = check["krbtgt"]["pwd_age_days"]

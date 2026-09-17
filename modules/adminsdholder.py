@@ -20,7 +20,7 @@ Grupos protegidos pelo SDProp (per MS-ADTS):
 
 from ldap3 import Connection, SUBTREE
 from ldap3.core.exceptions import LDAPExceptionError
-from core.utils import get_attr, get_display_name
+from core.utils import get_attr, get_display_name, sev_icon
 import config
 
 
@@ -157,7 +157,7 @@ def run(conn: Connection) -> dict:
     print("[*] Módulo 10: AdminSDHolder / Contas adminCount Orphaned...")
 
     check   = get_orphaned_adminsdholder(conn)
-    icon    = {"critical": "🔴", "warning": "🟡", "ok": "🟢"}.get(check["severity"], "⚪")
+    icon = sev_icon(check["severity"])
     total   = check.get("total_admin_count", 0)
     orphaned = check["count"]
 

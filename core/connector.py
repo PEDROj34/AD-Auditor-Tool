@@ -13,10 +13,7 @@ Interação com o AD:
 """
 
 import sys
-from ldap3 import (
-    Server, Connection, NTLM, SUBTREE,
-    Tls, SYNC, ALL_ATTRIBUTES
-)
+from ldap3 import Server, Connection, NTLM, Tls, SYNC
 from ldap3.core.exceptions import (
     LDAPBindError,
     LDAPSocketOpenError,
@@ -55,9 +52,9 @@ def get_connection() -> Connection:
     # ── 1. Configuração TLS opcional ─────────────────────────────────────────
     tls_config = None
     if config.USE_TLS and not config.USE_SSL:
-        tls_config = Tls(validate=ssl.CERT_NONE)  # Em produção: CERT_REQUIRED
-        # Nota para o relatório: CERT_NONE é aceitável em lab; num pentest real,
-        # validar o certificado do DC evita MITM sobre o canal LDAP.
+        # CERT_NONE aceitável em laboratório; em produção usar CERT_REQUIRED
+        # para validar o certificado do DC e prevenir ataques MITM no canal LDAP.
+        tls_config = Tls(validate=ssl.CERT_NONE)
 
     # ── 2. Definição do servidor ──────────────────────────────────────────────
     try:
