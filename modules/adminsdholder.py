@@ -79,7 +79,7 @@ def get_orphaned_adminsdholder(conn: Connection) -> dict:
     try:
         conn.search(
             search_base=config.BASE_DN,
-            search_filter="(&(objectClass=user)(adminCount=1)(!(objectClass=computer)))",
+            search_filter="(&(objectClass=user)(adminCount=1)(!(objectClass=computer))(!(sAMAccountName=krbtgt)))",
             search_scope=SUBTREE,
             attributes=[
                 "sAMAccountName", "displayName", "givenName", "sn", "cn",
@@ -120,7 +120,13 @@ def get_orphaned_adminsdholder(conn: Connection) -> dict:
         sam      = get_attr(entry, "sAMAccountName", "N/A")
         name     = get_display_name(entry)
 
+        # Contas de sistema que legitimamente mantêm adminCount=1 (built-in do AD)
+        BUILTIN_ADMIN_ACCOUNTS = {"krbtgt", "administrator", "guest"}
+
         if dn in privileged_dns:
+            active_privileged += 1
+        elif sam.lower() in BUILTIN_ADMIN_ACCOUNTS:
+            # adminCount=1 é esperado nestas contas — não é orphaned
             active_privileged += 1
         else:
             orphaned.append({
